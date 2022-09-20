@@ -32,5 +32,4 @@ func TestEncryptDecryptStr(t *testing.T) {
 		t.Errorf("error when encrypting text. somehow it output nothing")
 		return
 	}
-	t.Logf("encryptStr: %s , decryptStr: %s", encryptStr, decryptStr)
 }
