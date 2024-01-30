@@ -1,4 +1,4 @@
-# cryptgo v2
+# cryptgo
 
 cryptgo is a crypt until writen in Go.
 
