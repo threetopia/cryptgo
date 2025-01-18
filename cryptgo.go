@@ -30,20 +30,38 @@ import (
 //		fmt.Println(string(encryptedData))
 //	}
 func Encrypt(data []byte, secret string, ivByte []byte) ([]byte, error) {
-	// Decode hex string back to raw binary
+	// Decode the secret key (hex-encoded)
 	key, err := hex.DecodeString(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode hex key: %w", err)
 	}
 
+	// Ensure key is 32 bytes for AES-256
+	if len(key) != 32 {
+		return nil, fmt.Errorf("invalid key size: expected 32 bytes, got %d bytes", len(key))
+	}
+
+	// Create AES cipher block
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	cfb := cipher.NewCFBEncrypter(block, ivByte)
-	encryptedData := make([]byte, len(data))
-	cfb.XORKeyStream(encryptedData, data)
-	return encryptedData, nil
+
+	// Create AES-GCM cipher mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a random nonce (12 bytes for AES-GCM)
+	nonce := ivByte
+	if len(nonce) != gcm.NonceSize() {
+		return nil, fmt.Errorf("invalid IV size: expected %d bytes, got %d bytes", gcm.NonceSize(), len(nonce))
+	}
+
+	// Seal the data with AES-GCM
+	ciphertext := gcm.Seal(nil, nonce, data, nil)
+	return ciphertext, nil
 }
 
 // Decrypt returns a decrypted data in []byte and error.
@@ -66,18 +84,40 @@ func Encrypt(data []byte, secret string, ivByte []byte) ([]byte, error) {
 //		fmt.Println(string(decryptedData))
 //	}
 func Decrypt(encryptedData []byte, secret string, ivByte []byte) ([]byte, error) {
-	// Decode hex string back to raw binary
+	// Decode the secret key (hex-encoded)
 	key, err := hex.DecodeString(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode hex key: %w", err)
 	}
 
+	// Ensure key is 32 bytes for AES-256
+	if len(key) != 32 {
+		return nil, fmt.Errorf("invalid key size: expected 32 bytes, got %d bytes", len(key))
+	}
+
+	// Create AES cipher block
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	cfb := cipher.NewCFBDecrypter(block, ivByte)
-	data := make([]byte, len(encryptedData))
-	cfb.XORKeyStream(data, encryptedData)
-	return data, nil
+
+	// Create AES-GCM cipher mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure nonce is the correct size for AES-GCM
+	nonce := ivByte
+	if len(nonce) != gcm.NonceSize() {
+		return nil, fmt.Errorf("invalid IV size: expected %d bytes, got %d bytes", gcm.NonceSize(), len(nonce))
+	}
+
+	// Decrypt the data
+	plaintext, err := gcm.Open(nil, nonce, encryptedData, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt data: %w", err)
+	}
+
+	return plaintext, nil
 }
