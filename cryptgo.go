@@ -5,6 +5,8 @@ package cryptgo
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/hex"
+	"fmt"
 )
 
 // Encrypt returns a encrypted data in []byte and error.
@@ -28,7 +30,13 @@ import (
 //		fmt.Println(string(encryptedData))
 //	}
 func Encrypt(data []byte, secret string, ivByte []byte) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(secret))
+	// Decode hex string back to raw binary
+	key, err := hex.DecodeString(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode hex key: %w", err)
+	}
+
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +66,13 @@ func Encrypt(data []byte, secret string, ivByte []byte) ([]byte, error) {
 //		fmt.Println(string(decryptedData))
 //	}
 func Decrypt(encryptedData []byte, secret string, ivByte []byte) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(secret))
+	// Decode hex string back to raw binary
+	key, err := hex.DecodeString(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode hex key: %w", err)
+	}
+
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
