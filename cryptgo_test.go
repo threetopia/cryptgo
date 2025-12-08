@@ -76,7 +76,7 @@ func TestDecrypt_InvalidIVSize(t *testing.T) {
 }
 
 var keyRt = "1234567890123456789012345678901212345678901234567890123456789012" // 32 bytes
-var ivRt = "123456789012"                      // 12 bytes for GCM
+var ivRt = "123456789012"                                                      // 12 bytes for GCM
 var plainRt = []byte("The quick brown fox jumps over the lazy dog")
 
 func TestEncryptDecrypt_RoundTrip(t *testing.T) {
@@ -100,5 +100,25 @@ func TestDecrypt_BadCiphertext(t *testing.T) {
 	_, err := Decrypt(badCipher, key, []byte(iv))
 	if err == nil {
 		t.Error("expected error for bad ciphertext, got nil")
+	}
+}
+
+func TestEncrypt_InvalidHexSecret(t *testing.T) {
+	data := []byte("test data")
+	invalidHex := "not_hex_string!@#"
+	iv := "123456789012"
+	_, err := Encrypt(data, invalidHex, []byte(iv))
+	if err == nil || err.Error() == "" {
+		t.Error("expected error for invalid hex secret, got nil")
+	}
+}
+
+func TestDecrypt_InvalidHexSecret(t *testing.T) {
+	data := []byte{1, 2, 3, 4}
+	invalidHex := "not_hex_string!@#"
+	iv := "123456789012"
+	_, err := Decrypt(data, invalidHex, []byte(iv))
+	if err == nil || err.Error() == "" {
+		t.Error("expected error for invalid hex secret, got nil")
 	}
 }
